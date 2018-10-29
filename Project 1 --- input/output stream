@@ -1,0 +1,94 @@
+/*
+ * File:   main.cpp
+ * Author: chengb
+ *Copyright [2018]  <chengb@miamioh.edu>
+ * Created on September 18, 2018, 5:29 PM
+ */
+ 
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <sstream>
+#include <algorithm>
+using namespace std;
+ 
+/*
+ *
+ */
+ 
+void userMap(ifstream& input1, unordered_map<int, string>& usermap ) {
+    std::string line;
+    while (getline(input1, line)) {
+      std::replace(line.begin(), line.end(), ':', ' ');
+      int userid;
+      std::string noused, logname;
+      std::istringstream is(line);
+      is >> logname >> noused >> userid;
+      usermap[userid] = logname;
+    }
+}
+ 
+void groupMap(ifstream& input2, unordered_map<int, vector<int>>& groupmap,
+        unordered_map<int, string>& groupNamemap) {
+    std::string line;
+    while (getline(input2, line)) {
+      std::replace(line.begin(), line.end(), ':', ' ');
+      std::replace(line.begin(), line.end(), ',', ' ');
+      vector<int> users;
+      int groupNo, userid;
+      std::string noused, groupName;
+      std::istringstream is(line);
+      is >> groupName>> noused >> groupNo;
+      groupNamemap[groupNo] = groupName;
+      while (is >> userid) {
+          users.push_back(userid);
+       }
+      groupmap[groupNo] = users;
+     }
+}
+ 
+void printText(int g_num, unordered_map<int, vector<int>>& map_group,
+        unordered_map<int, string>& map_gName,
+        unordered_map<int, string>& map_user) {
+    if (map_gName[g_num] == "") {
+        std::cout << g_num << " = Group not found." << std::endl;
+        return;
+    }
+    vector<int> people = map_group.at(g_num);
+    if (people.size() == 0) {
+        std::cout << g_num << " = " << map_gName[g_num] << ":" <<std::endl;
+        return;
+    }
+    std::cout << g_num << " = " << map_gName[g_num] << ": ";
+    for (unsigned int i = 0; i < people.size(); i++) {
+        if (i == people.size()-1)
+            std::cout << map_user[people[i]] << "(" << people[i] << ")";
+        else
+            std::cout << map_user[people[i]] << "(" << people[i] << ") ";
+    }
+    std::cout << "\n";
+}
+ 
+int main(int argc, char** argv) {
+    unordered_map<int, string> passwd;
+    unordered_map<int, string> groupName;
+    unordered_map<int, vector<int>> groups;
+    std::ifstream input1("passwd");
+    std::ifstream input2("groups");
+    if (!input1.good() || !input2.good()) {
+       std::cerr << "Error opening input/output streams!\n";
+        return 1;
+     }
+    groupMap(input2, groups, groupName);
+    userMap(input1, passwd);
+    input1.close();
+    input2.close();
+    for (int i = 1; i < argc; i++) {
+        int gid = atoi(argv[i]);
+        printText(gid, groups, groupName, passwd);
+     }
+    return 0;
+}
